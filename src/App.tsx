@@ -2,67 +2,51 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import booksJson from './books.json'
 import { Book } from './types'
+import { Toaster, toast } from 'sonner'
+import BookList from './components/BookList'
+import ReadingList from './components/ReadingList'
+import EmptyReadingList from './components/EmptyReadingList'
 
 function App() {
-  const [readingList, setReadingList] = useState<Book[]>([])
- 
-  const books = booksJson.library
-
-
-  
+  const [readingList, setReadingList] = useState<Book[]>([]);
+  const books = booksJson.library;
 
   const addBookToReadingList = (book: Book) => {
-      const updatedItems = [...readingList, book]
-      setReadingList(updatedItems)
-      window.localStorage.setItem('readinglist', JSON.stringify(updatedItems));   
-  }
-
-
-
-  useEffect(() => {
-    const storedItems = window.localStorage.getItem('readingList')
-    if(storedItems){
-      setReadingList(JSON.parse(storedItems))
+    if (readingList.includes(book)) {
+      const errorMessage = `The book ${book.book.title} is already on the reading list.`;
+      toast.error(errorMessage);
+    } else {
+      const updatedItems = [...readingList, book];
+      setReadingList(updatedItems);
+      toast.success(`Book: ${book.book.title} added to your reading list.`);
     }
-  }, [])
+  };
+
+  const removeFromReadingList = (book: Book) => {
+    setReadingList((prevstate) =>
+      prevstate.filter((bookR) => bookR.book.ISBN != book.book.ISBN)
+    );
+    toast.success(`You have completed reading ${book.book.title}`);
+  };
 
   return (
     <>
-    <main className='container w-full flex flex-col gap-10'>
-      <h1 className='text-4xl font-bold text-stone-50'>Available Books</h1>
-          <ul className='flex flex-row justify-center mt-10 gap-8'>
-              {books.map((book)=>(
-                <li className='flex flex-col gap-4 text-stone-50' key={book.book.ISBN}>
-                      <h2>{book.book.title}</h2>
-                      <p>{book.book.genre}</p>
-                      <p>{book.book.year}</p>
-                      <img style={{width: '200px'}} src={book.book.cover} alt="" />
-                      <button onClick={()=>{addBookToReadingList(book)}} className=' bg-sky-500 border-2 border-white p-2 rounded-lg'>Add to my reading list</button>
-                </li>
-              ))}
-          </ul>
-
-        <h2 className='text-4xl font-bold text-stone-50'>Reading List</h2>
+      <Toaster richColors/>
+      <main className="container items-center flex flex-col gap-10">
+        <BookList 
+          books={books} 
+          addBook={addBookToReadingList} 
+        />
         {readingList.length < 1 ? (
-            <h3 className='text-2xl font-bold text-stone-50'>You have no books in your reading list. </h3>
+          <EmptyReadingList />
         ) : (
-            <ul className='flex flex-row justify-center mt-10 gap-8'>
-              {readingList.map((book)=>(
-                  <li className='flex flex-col gap-4 text-stone-50' key={book.book.ISBN}>
-                    <h2>{book.book.title}</h2>
-                    <p>{book.book.genre}</p>
-                    <p>{book.book.year}</p>
-                    <img style={{width: '200px'}} src={book.book.cover} alt="" />
-                
-                  </li>
-              ))}
-            </ul>
+          <ReadingList
+            readingList={readingList}
+            removeBook={removeFromReadingList}
+          />
         )}
-        
       </main>
-      
     </>
-  )
+  );
 }
-
 export default App
