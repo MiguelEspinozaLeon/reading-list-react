@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 import booksJson from './books.json'
 import { Book } from './types'
@@ -9,7 +9,17 @@ import EmptyReadingList from './components/EmptyReadingList'
 
 function App() {
   const [readingList, setReadingList] = useState<Book[]>([]);
-  const books = booksJson.library;
+  const [query, setQuery] = useState('')
+  const [books, setBooks] = useState<Book[]>(booksJson.library)
+
+ 
+  const filteredBooks = useMemo(()=>{
+    return query != null && query.length > 0 ? books.filter(book=>{
+      return (
+        book.book.title.toLowerCase().includes(query.toLowerCase()) || 
+        book.book.genre.toLowerCase().includes(query.toLowerCase())
+      )}) : books
+  },[books, query])
 
   const addBookToReadingList = (book: Book) => {
     if (readingList.includes(book)) {
@@ -27,14 +37,15 @@ function App() {
       prevstate.filter((bookR) => bookR.book.ISBN != book.book.ISBN)
     );
     toast.success(`You have completed reading ${book.book.title}`);
-  };
+  }; 
 
   return (
     <>
       <Toaster richColors/>
-      <main className="container items-center flex flex-col gap-10">
+      <main className="container content-center items-center flex flex-col gap-10">
+        <input className='p-2 rounded-lg' type="text" value={query} onChange={(event)=>{setQuery(event.target.value)}} placeholder='Filtrar por titulo o genero' />
         <BookList 
-          books={books} 
+          books={filteredBooks} 
           addBook={addBookToReadingList} 
         />
         {readingList.length < 1 ? (
